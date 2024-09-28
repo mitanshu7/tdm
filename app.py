@@ -5,7 +5,7 @@ from glob import glob
 import shutil
 from huggingface_hub import HfApi
 import gradio as gr
-from tqdm import tqdm
+from tqdm.auto import tqdm
 import threading
 
 
