@@ -84,22 +84,29 @@ def download_biorxiv():
         # Check if the file is a zip file
         if file.endswith(".meca"):
 
-            # Download the file
-            s3_client.download_file(biorxiv_bucket_name, file, 'tmp.meca', ExtraArgs={'RequestPayer':'requester'})
-                
-            # Unzip meca file
-            with zipfile.ZipFile('tmp.meca', 'r') as zip_ref:
-                zip_ref.extractall("tmp")
+            # Proccess the zip file
+            try:
 
-            # Gather the xml file
-            xml = glob('tmp/content/*.xml')
+                # Download the file
+                s3_client.download_file(biorxiv_bucket_name, file, 'tmp.meca', ExtraArgs={'RequestPayer':'requester'})
+                    
+                # Unzip meca file
+                with zipfile.ZipFile('tmp.meca', 'r') as zip_ref:
+                    zip_ref.extractall("tmp")
 
-            # Copy the xml file to the output folder
-            shutil.copy(xml[0], biorxiv_output_folder)
+                # Gather the xml file
+                xml = glob('tmp/content/*.xml')
 
-            # Remove the tmp folder and file
-            shutil.rmtree('tmp')
-            os.remove('tmp.meca')
+                # Copy the xml file to the output folder
+                shutil.copy(xml[0], biorxiv_output_folder)
+
+                # Remove the tmp folder and file
+                shutil.rmtree('tmp')
+                os.remove('tmp.meca')
+
+            except Exception as e:
+
+                print(f"Error processing file {file}: {e}")
 
 
     # Zip the output folder
@@ -136,22 +143,28 @@ def download_medrxiv():
         # Check if the file is a zip file
         if file.endswith(".meca"):
 
-            # Download the file
-            s3_client.download_file(medrxiv_bucket_name, file, 'tmp.meca', ExtraArgs={'RequestPayer':'requester'})
-                
-            # Unzip meca file
-            with zipfile.ZipFile('tmp.meca', 'r') as zip_ref:
-                zip_ref.extractall("tmp")
+            # Proccess the zip file
+            try:
 
-            # Gather the xml file
-            xml = glob('tmp/content/*.xml')
+                # Download the file
+                s3_client.download_file(medrxiv_bucket_name, file, 'tmp.meca', ExtraArgs={'RequestPayer':'requester'})
+                    
+                # Unzip meca file
+                with zipfile.ZipFile('tmp.meca', 'r') as zip_ref:
+                    zip_ref.extractall("tmp")
 
-            # Copy the xml file to the output folder
-            shutil.copy(xml[0], medrxiv_output_folder)
+                # Gather the xml file
+                xml = glob('tmp/content/*.xml')
 
-            # Remove the tmp folder and file
-            shutil.rmtree('tmp')
-            os.remove('tmp.meca')
+                # Copy the xml file to the output folder
+                shutil.copy(xml[0], medrxiv_output_folder)
+
+                # Remove the tmp folder and file
+                shutil.rmtree('tmp')
+                os.remove('tmp.meca')
+
+            except Exception as e:
+                print(f"Error processing file {file}: {e}")
 
 
     # Zip the output folder
