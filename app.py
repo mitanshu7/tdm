@@ -23,16 +23,8 @@ medrxiv_bucket_name = 'medrxiv-src-monthly'
 # AWS region name
 region_name = 'us-east-1'
 
-# Output folders for downloaded files
-biorxiv_output_folder = 'biorxiv-xml-dump'
-medrxiv_output_folder = 'medrxiv-xml-dump'
-
-# Create output folders if they don't exist
-os.makedirs(biorxiv_output_folder, exist_ok=True)
-os.makedirs(medrxiv_output_folder, exist_ok=True)
-
 # Hugging Face destination repository name
-destination_repo_name = 'xml-dump'
+destination_repo_name = 'xml-dump-monthly'
 
 ################################################################################
 
@@ -65,18 +57,25 @@ repo_id = f"{username}/{destination_repo_name}"
 
 ################################################################################
 
-def download_biorxiv():
+def download_biorxiv(Prefix=""):
     
     print("Downloading Biorxiv files.")
+
+    # Output folders for downloaded files
+    biorxiv_output_folder = Prefix + 'biorxiv-xml-dump'
+
+    # Create output folders if they don't exist
+    os.makedirs(biorxiv_output_folder, exist_ok=True)
 
     # Gather all objects from Biorxiv bucket
     biorxiv_pages = paginator.paginate(
         Bucket=biorxiv_bucket_name,
-        RequestPayer='requester'
+        RequestPayer='requester',
+        Prefix=Prefix
     ).build_full_result()
 
     # Dowload all objects from Biorxiv bucket
-    for biorxiv_object in tqdm(biorxiv_pages['Contents']):
+    for biorxiv_object in tqdm(biorxiv_pages['Contents'], desc=Prefix):
 
         # Get the file name
         file = biorxiv_object['Key']
@@ -88,21 +87,21 @@ def download_biorxiv():
             try:
 
                 # Download the file
-                s3_client.download_file(biorxiv_bucket_name, file, 'tmp.meca', ExtraArgs={'RequestPayer':'requester'})
+                s3_client.download_file(biorxiv_bucket_name, file, 'tmp_bio.meca', ExtraArgs={'RequestPayer':'requester'})
                     
                 # Unzip meca file
-                with zipfile.ZipFile('tmp.meca', 'r') as zip_ref:
-                    zip_ref.extractall("tmp")
+                with zipfile.ZipFile('tmp_bio.meca', 'r') as zip_ref:
+                    zip_ref.extractall("tmp_bio")
 
                 # Gather the xml file
-                xml = glob('tmp/content/*.xml')
+                xml = glob('tmp_bio/content/*.xml')
 
                 # Copy the xml file to the output folder
                 shutil.copy(xml[0], biorxiv_output_folder)
 
-                # Remove the tmp folder and file
-                shutil.rmtree('tmp')
-                os.remove('tmp.meca')
+                # Remove the tmp_bio folder and file
+                shutil.rmtree('tmp_bio')
+                os.remove('tmp_bio.meca')
 
             except Exception as e:
 
@@ -116,26 +115,34 @@ def download_biorxiv():
     print(f"Uploading {biorxiv_output_folder}.zip to Hugging Face repo {repo_id}.")
     hugging_face_api.upload_file(path_or_fileobj=f'{biorxiv_output_folder}.zip', path_in_repo=f'{biorxiv_output_folder}.zip', repo_id=repo_id, repo_type="dataset")
     
-    print("Done.")
+    print("Biorxiv Done.")
 
 # Create separate threads function
-first_thread = threading.Thread(target=download_biorxiv)
+first_thread = threading.Thread(target=download_biorxiv, args=("Current_Content/September_2024/",))
 
 # Start thread
 first_thread.start()
 
 ################################################################################
-def download_medrxiv():
+def download_medrxiv(Prefix=""):
+
     print("Downloading Medrxiv files.")
+
+    # Output folders for downloaded files
+    medrxiv_output_folder = Prefix + 'medrxiv-xml-dump'
+
+    # Create output folders if they don't exist
+    os.makedirs(medrxiv_output_folder, exist_ok=True)
 
     # Gather all objects from Medrxiv bucket
     medrxiv_pages = paginator.paginate(
         Bucket=medrxiv_bucket_name,
-        RequestPayer='requester'
+        RequestPayer='requester',
+        Prefix=Prefix
     ).build_full_result()
 
     # Dowload all objects from Medrxiv bucket
-    for medrxiv_object in tqdm(medrxiv_pages['Contents']):
+    for medrxiv_object in tqdm(medrxiv_pages['Contents'], desc=Prefix):
 
         # Get the file name
         file = medrxiv_object['Key']
@@ -147,21 +154,21 @@ def download_medrxiv():
             try:
 
                 # Download the file
-                s3_client.download_file(medrxiv_bucket_name, file, 'tmp.meca', ExtraArgs={'RequestPayer':'requester'})
+                s3_client.download_file(medrxiv_bucket_name, file, 'tmp_med.meca', ExtraArgs={'RequestPayer':'requester'})
                     
                 # Unzip meca file
-                with zipfile.ZipFile('tmp.meca', 'r') as zip_ref:
-                    zip_ref.extractall("tmp")
+                with zipfile.ZipFile('tmp_med.meca', 'r') as zip_ref:
+                    zip_ref.extractall("tmp_med")
 
                 # Gather the xml file
-                xml = glob('tmp/content/*.xml')
+                xml = glob('tmp_med/content/*.xml')
 
                 # Copy the xml file to the output folder
                 shutil.copy(xml[0], medrxiv_output_folder)
 
-                # Remove the tmp folder and file
-                shutil.rmtree('tmp')
-                os.remove('tmp.meca')
+                # Remove the tmp_med folder and file
+                shutil.rmtree('tmp_med')
+                os.remove('tmp_med.meca')
 
             except Exception as e:
                 print(f"Error processing file {file}: {e}")
@@ -174,10 +181,10 @@ def download_medrxiv():
 
     hugging_face_api.upload_file(path_or_fileobj=f'{medrxiv_output_folder}.zip', path_in_repo=f'{medrxiv_output_folder}.zip', repo_id=repo_id, repo_type="dataset")
 
-    print("Done.")
+    print("Medrxiv Done.")
 
 # Create separate threads function
-second_thread = threading.Thread(target=download_medrxiv)
+second_thread = threading.Thread(target=download_medrxiv, args=("Current_Content/September_2024/",))
 
 # Start thread
 second_thread.start()
